@@ -1,6 +1,10 @@
 """Geocoding module for converting location strings to coordinates."""
 
+import logging
+
 import httpx
+
+logger = logging.getLogger(__name__)
 
 
 async def geocode(location: str, client: httpx.AsyncClient) -> tuple[float, float, str]:
@@ -16,13 +20,28 @@ async def geocode(location: str, client: httpx.AsyncClient) -> tuple[float, floa
 
     Raises:
         ValueError: If no results are found for the given location.
+        httpx.TimeoutException: If the geocoding request times out.
+        httpx.HTTPError: If a transport-level HTTP error occurs.
         RuntimeError: If the geocoding API returns a non-2xx status code.
     """
     url = "https://geocoding-api.open-meteo.com/v1/search"
     params = {"name": location, "count": 1, "language": "en", "format": "json"}
 
-    response = await client.get(url, params=params)
+    try:
+        response = await client.get(url, params=params)
+    except httpx.TimeoutException as exc:
+        logger.error("Geocoding request timed out for location '%s': %s", location, exc)
+        raise
+    except httpx.HTTPError as exc:
+        logger.error("Geocoding HTTP error for location '%s': %s", location, exc)
+        raise
+
     if response.status_code != 200:
+        logger.error(
+            "Geocoding API returned HTTP %d for location '%s'",
+            response.status_code,
+            location,
+        )
         raise RuntimeError(
             f"Geocoding API error: HTTP {response.status_code} for location '{location}'"
         )

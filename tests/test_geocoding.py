@@ -83,3 +83,23 @@ async def test_geocode_non_200_raises_runtime_error():
         async with httpx.AsyncClient() as client:
             with pytest.raises(RuntimeError, match="Geocoding API error"):
                 await geocode("Tokyo", client)
+
+
+@pytest.mark.asyncio
+async def test_geocode_timeout_raises_timeout_exception():
+    """geocode() raises httpx.TimeoutException on a timeout."""
+    with respx.mock:
+        respx.get(GEOCODING_URL).mock(side_effect=httpx.TimeoutException("timed out"))
+        async with httpx.AsyncClient() as client:
+            with pytest.raises(httpx.TimeoutException):
+                await geocode("Tokyo", client)
+
+
+@pytest.mark.asyncio
+async def test_geocode_http_error_raises_http_error():
+    """geocode() raises httpx.HTTPError on a transport-level error."""
+    with respx.mock:
+        respx.get(GEOCODING_URL).mock(side_effect=httpx.HTTPError("connection failed"))
+        async with httpx.AsyncClient() as client:
+            with pytest.raises(httpx.HTTPError):
+                await geocode("Tokyo", client)

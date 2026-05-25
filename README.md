@@ -33,31 +33,15 @@ uv run pytest
 
 ## Integrating with Claude Desktop
 
-Claude Desktop loads MCP servers from a config file on startup.
+Run the install script from the repo root:
 
-**1. Open the config file:**
-
-- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
-
-**2. Add the weather server entry:**
-
-```json
-{
-  "mcpServers": {
-    "weather": {
-      "command": "uv",
-      "args": ["run", "--directory", "/absolute/path/to/weather-bot", "weather-mcp"]
-    }
-  }
-}
+```bash
+./install_tool.sh
 ```
 
-Replace `/absolute/path/to/weather-bot` with the actual path where you cloned this repo.
+This adds the weather server to your Claude Desktop config without touching any existing entries. It requires [`jq`](https://jqlang.org) — install it with `brew install jq` if needed.
 
-**3. Restart Claude Desktop.**
-
-The `get_weather` tool will now appear in Claude Desktop. You can ask things like:
+Then restart Claude Desktop. The `get_weather` tool will now appear and you can ask things like:
 
 - "What's the weather in Tokyo right now?"
 - "Give me a 7-day forecast for Paris starting June 1st."

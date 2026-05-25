@@ -68,3 +68,16 @@ def test_equal_start_and_end_date_is_valid():
     """start_date equal to end_date is valid."""
     req = WeatherRequest(location="Madrid", start_date="2024-06-05", end_date="2024-06-05")
     assert req.start_date == req.end_date
+
+
+def test_end_date_without_start_date_is_valid():
+    """end_date may be provided without start_date."""
+    req = WeatherRequest(location="Oslo", end_date="2024-06-10")
+    assert req.start_date is None
+    assert req.end_date == "2024-06-10"
+
+
+def test_invalid_end_date_format_raises():
+    """Non-ISO end_date raises ValidationError."""
+    with pytest.raises(ValidationError):
+        WeatherRequest(location="NYC", start_date="2024-06-01", end_date="June 10 2024")
