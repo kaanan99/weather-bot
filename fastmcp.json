@@ -1,0 +1,14 @@
+{
+  "source": {
+    "type": "filesystem",  
+    "path": "weather_mcp/server.py",
+    "entrypoint": "mcp"
+  },
+  "environment": {
+    "type": "uv",
+    "project": "."
+  },
+  "deployment": {
+    "transport": "stdio"
+  }
+}

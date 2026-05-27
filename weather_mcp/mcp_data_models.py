@@ -9,7 +9,9 @@ class WeatherRequest(BaseModel):
     """Validated request parameters for the get_weather tool.
 
     Attributes:
-        location: Non-empty location name.
+        location: City name, optionally followed by country and state/province
+            separated by commas. E.g. ``"Dublin"``, ``"Dublin, Ireland"``,
+            ``"Dublin, US, California"``.
         start_date: Optional start date in YYYY-MM-DD format.
         end_date: Optional end date in YYYY-MM-DD format; must be >= start_date.
     """

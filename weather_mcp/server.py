@@ -4,8 +4,8 @@ import logging
 import sys
 
 import httpx
-from mcp.server.fastmcp import FastMCP
-from mcp.server.fastmcp.exceptions import ToolError
+from fastmcp import FastMCP
+from fastmcp.exceptions import ToolError
 from mcp.types import ToolAnnotations
 from pydantic import ValidationError
 
@@ -17,6 +17,12 @@ from weather_mcp.weather_api import WeatherAPI
 
 logger = logging.getLogger(__name__)
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    stream=sys.stderr,
+)
+
 weather_api = WeatherAPI(Path(__file__).parent / "codes.json")
 
 mcp = FastMCP(
@@ -25,7 +31,9 @@ mcp = FastMCP(
         "Use get_weather to retrieve current conditions, forecasts, or historical "
         "weather for any location. "
         "Parameters:\n"
-        "- location (required): a city name or place string, e.g. 'Tokyo' or 'Paris, France'.\n"
+        "- location (required): location in the format 'City Name, Country, State/Province'. "
+        "Country and State/Province are optional. "
+        "Examples: 'Dublin', 'Dublin, Ireland', 'Dublin, US, California'.\n"
         "- start_date (optional): a date string in YYYY-MM-DD format. "
         "Omit for current conditions; use today or a future date for a forecast; "
         "use a past date for historical data.\n"
@@ -48,7 +56,9 @@ async def get_weather(
     to start_date).
 
     Args:
-        location: A city name or place string, e.g. "Tokyo" or "Paris, France".
+        location: Location in the format "City Name, Country, State/Province".
+            Country and State/Province are optional. E.g. "Dublin",
+            "Dublin, Ireland", "Dublin, US, California".
         start_date: Optional date in YYYY-MM-DD format. Omit for current
             conditions; use today or a future date for a forecast; use a past
             date for historical data.
@@ -79,7 +89,7 @@ async def get_weather(
 
         # 3-day forecast
         await get_weather(
-            location="Paris, France",
+            location="Paris",
             start_date="2026-06-01",
             end_date="2026-06-03",
         )
@@ -111,19 +121,3 @@ async def get_weather(
     except ValidationError as exc:
         logger.error("Validation error for request: %s", exc)
         raise ToolError(str(exc)) from exc
-
-
-def main() -> None:
-    """Run the weather MCP server over stdio transport."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        stream=sys.stderr,
-    )
-    logger.info("Weather MCP server starting")
-    try:
-        mcp.run()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        logger.info("Weather MCP server stopped")

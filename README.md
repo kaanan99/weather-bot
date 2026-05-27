@@ -25,6 +25,12 @@ cd weather-bot
 uv sync
 ```
 
+## Run locally
+Start the server using:
+```bash
+uv run fastmcp run fastmcp.json 
+```
+
 ## Running tests
 
 ```bash
@@ -33,13 +39,12 @@ uv run pytest
 
 ## Integrating with Claude Desktop
 
-Run the install script from the repo root:
-
+Run the following command from the repo root:
 ```bash
-./install_tool.sh
+uv run fastmcp install claude-desktop weather_mcp/server.py --project "$(pwd)"
 ```
 
-This adds the weather server to your Claude Desktop config without touching any existing entries. It requires [`jq`](https://jqlang.org) — install it with `brew install jq` if needed.
+This registers the server with Claude Desktop using [FastMCP](https://github.com/jlowin/fastmcp).
 
 Then restart Claude Desktop. The `get_weather` tool will now appear and you can ask things like:
 
