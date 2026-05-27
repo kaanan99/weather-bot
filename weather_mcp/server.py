@@ -24,8 +24,8 @@ mcp = FastMCP(
     instructions=(
         "Use get_weather to retrieve current conditions, forecasts, or historical "
         "weather for any location. "
-        "The tool accepts a WeatherRequest with the following fields:\n"
-        "- location (required): a place name string, e.g. 'Tokyo' or 'Paris, France'.\n"
+        "Parameters:\n"
+        "- location (required): a city name or place string, e.g. 'Tokyo' or 'Paris, France'.\n"
         "- start_date (optional): a date string in YYYY-MM-DD format. "
         "Omit for current conditions; use today or a future date for a forecast; "
         "use a past date for historical data.\n"
@@ -36,7 +36,11 @@ mcp = FastMCP(
 
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
-async def get_weather(request: WeatherRequest) -> dict:
+async def get_weather(
+    location: str,
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> dict:
     """Get weather for any location.
 
     Omit dates for current conditions. Use a future start_date for forecasts.
@@ -44,21 +48,53 @@ async def get_weather(request: WeatherRequest) -> dict:
     to start_date).
 
     Args:
-        request: Validated weather request containing location and optional dates.
+        location: A city name or place string, e.g. "Tokyo" or "Paris, France".
+        start_date: Optional date in YYYY-MM-DD format. Omit for current
+            conditions; use today or a future date for a forecast; use a past
+            date for historical data.
+        end_date: Optional date in YYYY-MM-DD format. Must be >= start_date.
+            Defaults to start_date when omitted.
 
     Returns:
-        For current conditions: a flat dict with temperature_c, humidity_percent,
-        wind_speed_kmh, precipitation_mm, conditions, and observed_at.
+        For current conditions (no start_date), a dict with keys:
+            temperature_c (float), humidity_percent (float),
+            wind_speed_kmh (float), precipitation_mm (float),
+            conditions (str), observed_at (str, ISO datetime),
+            location (str, resolved display name).
 
-        For forecast/historical: a dict with a "days" list where each entry has
-        date, temp_high_c, temp_low_c, precipitation_mm, wind_speed_max_kmh,
-        and conditions.
+        For forecast/historical (with start_date), a dict with keys:
+            days (list of dicts, each with: date (str, YYYY-MM-DD),
+            temp_high_c (float), temp_low_c (float),
+            precipitation_mm (float), wind_speed_max_kmh (float),
+            conditions (str)),
+            location (str, resolved display name).
 
     Raises:
         ToolError: If the location is not found, the API is unreachable, or
             input validation fails.
+
+    Example:
+        # Current conditions
+        await get_weather(location="Tokyo")
+
+        # 3-day forecast
+        await get_weather(
+            location="Paris, France",
+            start_date="2026-06-01",
+            end_date="2026-06-03",
+        )
+
+        # Historical data
+        await get_weather(
+            location="New York",
+            start_date="2025-01-01",
+            end_date="2025-01-07",
+        )
     """
     try:
+        request = WeatherRequest(
+            location=location, start_date=start_date, end_date=end_date
+        )
         async with httpx.AsyncClient(timeout=10.0) as client:
             lat, lon, display_name = await geocoding.geocode(request.location, client)
             result = await weather_api.get_weather(
